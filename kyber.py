@@ -5,12 +5,6 @@ from Crypto.Random import get_random_bytes
 import hashlib
 import base64
 
-
-def createSessionKeyPair():
-    kem = KeyEncapsulation("ML-KEM-1024")
-    public_key = kem.generate_keypair()
-    return kem, public_key, kem.export_secret_key()
-
 def createKeyPair(password, user):
     kem = KeyEncapsulation("ML-KEM-1024")
     pub = kem.generate_keypair()
@@ -57,9 +51,19 @@ def loadKeyPair(password, user):
 
     return pub, priv
 
+def loadPublicKey(user):
+    db = TinyDB("db.json")
+    query = Query()
+    result = db.get(query.user == user)
+
+    if not result:
+        raise Exception(f"User {user} not found")
+
+    return base64.b64decode(result['pub'])
+
 def encryptMessage(recPub, msg):
     kem = KeyEncapsulation("ML-KEM-1024")
-    ct, ss = kem.encapsulate(recPub)
+    ct, ss = kem.encap_secret(recPub)
 
     nonce = get_random_bytes(12)
     key = hashlib.sha256(ss).digest()
@@ -69,9 +73,8 @@ def encryptMessage(recPub, msg):
     return ct, nonce, cht, tag
 
 def decryptMessage(priv, ct, nonce, cht, tag):
-    kem = KeyEncapsulation("ML-KEM-1024")
-    kem.import_secret_key(priv)
-    ss = kem.decapsulate(ct)
+    kem = KeyEncapsulation("ML-KEM-1024", priv)
+    ss = kem.decap_secret(ct)
 
     key = hashlib.sha256(ss).digest()
     ch = ChaCha20_Poly1305.new(key=key, nonce=nonce)

@@ -25,7 +25,7 @@ def connectToSocket(sock, ip, port):
         sock.connect((ip, int(port)))
         return sock
     except Exception as e:
-        print(e.__class__)
+        print(f"{e.__class__.__name__}: {e}")
         return None
 
 
@@ -83,7 +83,7 @@ def sendMessage(msg, conn, session=None):
             "tag": base64.b64encode(tag).decode(),
         })
     except Exception as e:
-        print(e.__class__)
+        print(f"{e.__class__.__name__}: {e}")
 
 
 def recieveMessage(conn, session):
@@ -102,14 +102,14 @@ def recieveMessage(conn, session):
             base64.b64decode(packet["tag"]),
         )
     except Exception as e:
-        print(e.__class__)
+        print(f"{e.__class__.__name__}: {e}")
         return None
 
 def closeConnection(conn):
     try:
         conn.close()
     except Exception as e:
-        print(e.__class__)
+        print(f"{e.__class__.__name__}: {e}")
 
 def listener(sock, is_server=False, state=None, host="0.0.0.0", port=5000):
     conn = createAndListen(sock, host, int(port)) if is_server else sock
@@ -124,7 +124,7 @@ def listener(sock, is_server=False, state=None, host="0.0.0.0", port=5000):
             msg = recieveMessage(conn, session)
             if msg is None:
                 break
-            print(f"\npeer: {msg}")
+            print(f"\n-> {msg}")
     except Exception as e:
         print(e.__class__)
     finally:
